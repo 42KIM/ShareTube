@@ -1,5 +1,11 @@
-import { API, request, saveList } from './utils/api.js';
+import {
+  API,
+  checkUserdata,
+  fetchSubscriptions,
+  fetchShared,
+} from './utils/api.js';
 import { getItem, setItem, removeItem } from './utils/storage.js';
+import { trim, format, DATA } from './utils/trim.js';
 import AuthPage from './components/AuthPage.js';
 import UserPage from './components/UserPage.js';
 // import SharePage from './SharePage.js';
@@ -8,6 +14,7 @@ import { initRouter, push } from './utils/router.js';
 export default function App({ $target }) {
   this.state = {
     isAuthorized: getItem('isAuthorized', false),
+    isInitialUse: true,
     userProfile: {
       id: '',
       thumbnail: '',
@@ -38,9 +45,12 @@ export default function App({ $target }) {
       if (nextPageToken !== undefined) {
         // accessToken 만료되면 어쩌지?
         const accessToken = getItem('accessToken');
-        const nextSubscriptionData = await request(
-          API.SUBSCRIPTION + `&pageToken=${nextPageToken}`,
-          accessToken,
+        const nextSubscriptionData = trim(
+          await fetchSubscriptions(
+            API.SUBSCRIPTIONS + `&pageToken=${nextPageToken}`,
+            accessToken,
+          ),
+          DATA.SUBSCRIPTIONS,
         );
         if (nextSubscriptionData.nextPageToken !== undefined) {
           setItem('nextPageToken', nextSubscriptionData.nextPageToken);
@@ -52,21 +62,29 @@ export default function App({ $target }) {
           ...this.state,
           subscriptionList: {
             ...this.state.subscriptionList,
-            items: nextSubscriptionData.items,
+            ...nextSubscriptionData,
           },
         };
         this.setState(nextState, 'userPage');
       }
     },
     onSave: async (selectedItems) => {
-      // selectedItem를 기반으로 subscriptionList.items에서 채널id, 채널thumbnail, 채널title을 취합하여 db로 전송
-      // selectedItems 가공하기
-      // const nextShareList =  {}
+      const { id, nickname } = this.state.userProfile;
+      const nextShareList = format(id, nickname, selectedItems);
 
-      await saveList(API.SAVE_LIST, {
-        method: POST,
-        body: JSON.stringify(nextShareList),
-      });
+      const fetchMethod = this.state.isInitialUse ? 'POST' : 'PUT';
+      if (fetchMethod === 'POST') {
+        await fetchShared('/sharetubes', {
+          method: 'POST',
+          body: JSON.stringify(nextShareList),
+        });
+      }
+      if (fetchMethod === 'PUT') {
+        await fetchShared(`/sharetubes/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(nextShareList),
+        });
+      }
     },
   });
   // const sharePage = new SharePage({ $target });
@@ -79,6 +97,7 @@ export default function App({ $target }) {
       authPage.setState();
     } else if (renderPage === 'userPage') {
       this.state = nextState;
+      console.log('저장된 목록 있나?: ', this.state);
       userPage.setState({
         thumbnail: this.state.userProfile.thumbnail,
         nickname: this.state.userProfile.nickname,
@@ -97,7 +116,7 @@ export default function App({ $target }) {
 
   this.route = async () => {
     const { pathname } = window.location;
-    // const [, userId] = pathname.split('/');
+    const [, userId] = pathname.split('/');
 
     if (pathname === '/' && !this.state.isAuthorized) {
       authPage.render();
@@ -114,39 +133,53 @@ export default function App({ $target }) {
       push('/');
     } else if (pathname === '/' && this.state.isAuthorized) {
       const accessToken = getItem('accessToken');
-      const userData = await request(API.USERINFO, accessToken);
-      const subscriptionData = await request(API.SUBSCRIPTION, accessToken);
-
+      const userData = trim(
+        await fetchSubscriptions(API.USERINFO, accessToken),
+        DATA.USERINFO,
+      );
+      console.log('user', userData);
+      const subscriptionData = trim(
+        await fetchSubscriptions(API.SUBSCRIPTIONS, accessToken),
+        DATA.SUBSCRIPTIONS,
+      );
+      console.log('sub', subscriptionData);
       if (subscriptionData.nextPageToken !== undefined) {
         setItem('nextPageToken', subscriptionData.nextPageToken);
       }
 
+      const fetchedUserdata = await checkUserdata(
+        `/sharetubes/count?user=${userData.id}`,
+      );
+      const isInitialUse = fetchedUserdata ? false : true;
+
       const nextState = {
         ...this.state,
+        isInitialUse,
         isAuthorized: true,
         userProfile: {
-          id: userData.id,
-          thumbnail: userData.picture,
-          nickname: userData.name,
+          ...userData,
         },
         subscriptionList: {
-          totalResults: subscriptionData.pageInfo.totalResults,
-          items: subscriptionData.items,
+          ...subscriptionData,
         },
       };
 
       this.setState(nextState, 'userPage');
-    }
-    // sharePage 렌더
-    // else if (userId) {
-    //   const sharedList = [];
-    //   const nextState = {
-    //     ...this.state,
-    //     sharedList,
-    //   };
+    } else if (userId) {
+      const sharedData = trim(
+        await fetchShared(`/sharetubes/${userId}`),
+        DATA.SHARED,
+      );
 
-    //   this.setState(nextState, 'sharedPage');
-    // }
+      const nextState = {
+        ...this.state,
+        sharedList: {
+          ...sharedData,
+        },
+      };
+
+      this.setState(nextState, 'sharedPage');
+    }
   };
 
   initRouter(() => this.route());

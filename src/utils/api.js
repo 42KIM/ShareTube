@@ -1,14 +1,29 @@
-const API_END_POINT = 'https://www.googleapis.com';
+const YOUTUBE_API_END_POINT = 'https://www.googleapis.com';
+const SHARETUBE_API_END_POINT = 'http://localhost:1337';
+
 export const API = {
   USERINFO: '/oauth2/v1/userinfo',
-  SUBSCRIPTION:
+  SUBSCRIPTIONS:
     '/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=50',
-  SAVE_LIST: '공유 리스트를 저장할 api 주소',
 };
 
-export const request = async (url, accessToken, options = {}) => {
+export const checkUserdata = async (url, options = {}) => {
   try {
-    const res = await fetch(`${API_END_POINT}${url}`, {
+    const res = await fetch(`${SHARETUBE_API_END_POINT}${url}`, {
+      ...options,
+    });
+
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+export const fetchSubscriptions = async (url, accessToken, options = {}) => {
+  try {
+    const res = await fetch(`${YOUTUBE_API_END_POINT}${url}`, {
       ...options,
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -24,26 +39,9 @@ export const request = async (url, accessToken, options = {}) => {
   }
 };
 
-// export const getList = async (url, options = {}) => {
-//   try {
-//     const res = await fetch(`${API_END_POINT}${url}`, {
-//       ...options,
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//     });
-
-//     if (res.ok) {
-//       return await res.json();
-//     }
-//   } catch (e) {
-//     alert(e.message);
-//   }
-// };
-
-export const saveList = async (url, options = {}) => {
+export const fetchShared = async (url = '', options = {}) => {
   try {
-    const res = await fetch(`${API_END_POINT}${url}`, {
+    const res = await fetch(`${SHARETUBE_API_END_POINT}${url}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',

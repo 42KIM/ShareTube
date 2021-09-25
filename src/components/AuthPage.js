@@ -5,7 +5,6 @@ export default function AuthPage({ $target }) {
   $target.appendChild($authPage);
 
   this.render = () => {
-    console.log('렌더');
     $authPage.innerHTML = `
       <button class="authPage__signInButton" type="button">
         <img src='https://user-images.githubusercontent.com/75300807/134757459-d6d0be61-fca1-4694-bbfd-eae1ad396e2e.png'>

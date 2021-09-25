@@ -14,6 +14,7 @@ export default function UserList({
 
   this.setState = (nextState) => {
     this.state = nextState;
+    console.log('여기 왜 두번 실행?', this.state);
     this.render();
   };
 
@@ -75,13 +76,12 @@ export default function UserList({
 
   // const isSelectAll = true;
 
-  const addSelected = (channelId) => {
-    this.state.selectedItems.push(channelId);
+  const addSelected = (selectedItem) => {
+    this.state.selectedItems.push(selectedItem);
   };
-  const removeSelected = (channelId) => {
-    this.state.selectedItems.splice(
-      this.state.selectedItems.indexOf(channelId),
-      1,
+  const removeSelected = (selectedItem) => {
+    this.state.selectedItems = this.state.selectedItems.filter(
+      (item) => item.channelId !== selectedItem,
     );
   };
 
@@ -96,7 +96,14 @@ export default function UserList({
 
       if ($item.classList.length === 1) {
         $item.classList.add('selected');
-        addSelected($item.id);
+        const thumbnail = $item.querySelector('img').src;
+        const title = $item.querySelector('span').textContent;
+
+        addSelected({
+          channelId: $item.id,
+          thumbnail,
+          title,
+        });
       } else {
         $item.classList.remove('selected');
         removeSelected($item.id);
@@ -125,10 +132,7 @@ export default function UserList({
     // }
 
     if (e.target.className === 'controlPanel__saveList') {
-      // 현재 선택되어 있는 item들 db로 내보내기
-      // 선택, 해제 내용을 id만 담아뒀다가, 내보내기 할 때 subscriptionList에서 item에 필요정보를 취합해서 내보낸다?
-      // 그리고 sharedList 업데이트
-      onSave(selectedItems);
+      onSave(this.state.selectedItems);
     }
   });
 }
