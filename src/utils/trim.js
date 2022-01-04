@@ -23,7 +23,7 @@ export const trim = (fetchedData, dataName) => {
 
   if (dataName === 'shared') {
     return {
-      userId: fetchedData.user,
+      nickname: fetchedData.name,
       items: fetchedData.channels,
     };
   }
