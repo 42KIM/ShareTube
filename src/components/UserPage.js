@@ -5,6 +5,7 @@ export default function UserPage({
   $target,
   initialState,
   onScrollEnd,
+  onClick,
   onSave,
 }) {
   const $userPage = document.createElement('div');
@@ -28,6 +29,7 @@ export default function UserPage({
       selectedItems: this.state.selectedItems,
     },
     onScrollEnd,
+    onClick,
     onSave,
   });
 

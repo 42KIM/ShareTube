@@ -2,6 +2,7 @@ export default function UserList({
   $target,
   initialState,
   onScrollEnd,
+  onClick,
   onSave,
 }) {
   const $userList = document.createElement('div');
@@ -37,6 +38,7 @@ export default function UserList({
       $userList.innerHTML = `
       <div class="userList__controlPanel">
         <button class="controlPanel__selectAll">전체 해제</button>
+        <button class="controlPanel__linkModal">내 공유 링크</button>
         <button class="controlPanel__saveList">공유 목록 저장하기</button>
       </div>
       <div class="userList__contents">
@@ -130,6 +132,11 @@ export default function UserList({
     //     });
     //   }
     // }
+
+    if (e.target.className === 'controlPanel__linkModal') {
+      console.log(onClick);
+      onClick();
+    }
 
     if (e.target.className === 'controlPanel__saveList') {
       onSave(this.state.selectedItems);
