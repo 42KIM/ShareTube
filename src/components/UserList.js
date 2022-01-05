@@ -15,7 +15,7 @@ export default function UserList({
 
   this.setState = (nextState) => {
     this.state = nextState;
-    console.log('여기 왜 두번 실행?', this.state);
+    console.log('여기 observer 때문에 두번 실행');
     this.render();
   };
 
@@ -45,8 +45,17 @@ export default function UserList({
         ${this.state.items
           .map(
             (item) => `
-          <div id=${item.snippet.resourceId.channelId} class="userList__item">
-            <img class="userList__thumbnail" src="${item.snippet.thumbnails.default.url}" alt="channel-thumbnail">
+          <div id=${item.snippet.resourceId.channelId} class="userList__item ${
+              this.state.selectedItems.some(
+                (selectedItem) =>
+                  selectedItem.channelId === item.snippet.resourceId.channelId,
+              )
+                ? 'selected'
+                : ''
+            }">
+            <img class="userList__thumbnail" src="${
+              item.snippet.thumbnails.default.url
+            }" alt="channel-thumbnail">
             <span class="userList__title">${item.snippet.title}</span>
             <button class="userList__button">선택</button>
           </div>
@@ -100,7 +109,6 @@ export default function UserList({
         $item.classList.add('selected');
         const thumbnail = $item.querySelector('img').src;
         const title = $item.querySelector('span').textContent;
-
         addSelected({
           channelId: $item.id,
           thumbnail,
@@ -134,7 +142,6 @@ export default function UserList({
     // }
 
     if (e.target.className === 'controlPanel__linkModal') {
-      console.log(onClick);
       onClick();
     }
 

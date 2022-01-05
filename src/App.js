@@ -38,7 +38,7 @@ export default function App({ $target }) {
       nickname: this.state.userProfile.nickname,
       totalResults: this.state.subscriptionList.totalResults,
       items: this.state.subscriptionList.items,
-      selectedItems: this.state.sharedList.items.map((item) => item.channelId),
+      selectedItems: this.state.sharedList.items,
     },
     onScrollEnd: async () => {
       const nextPageToken = getItem('nextPageToken');
@@ -73,6 +73,7 @@ export default function App({ $target }) {
       console.log(`http://localhost:5000/${this.state.userProfile.id}`);
     },
     onSave: async (selectedItems) => {
+      console.log('selected!!!!', selectedItems);
       const { id, nickname } = this.state.userProfile;
       const nextShareList = format(id, nickname, selectedItems);
 
@@ -115,9 +116,7 @@ export default function App({ $target }) {
         nickname: this.state.userProfile.nickname,
         totalResults: this.state.subscriptionList.totalResults,
         items: this.state.subscriptionList.items,
-        selectedItems: this.state.sharedList.items.map(
-          (item) => item.channelId,
-        ),
+        selectedItems: this.state.sharedList.items,
       });
     } else if (renderPage === 'sharePage') {
       this.state = nextState;
@@ -174,6 +173,12 @@ export default function App({ $target }) {
         subscriptionList: {
           ...subscriptionData,
         },
+        sharedList: isInitialUse
+          ? {
+              nickname: userData.nickname,
+              items: [],
+            }
+          : trim(await fetchShared(`/sharetubes/${userData.id}`), DATA.SHARED),
       };
 
       this.setState(nextState, 'userPage');
