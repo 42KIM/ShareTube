@@ -35,7 +35,7 @@ export default function SharePage({ $target, initialState }) {
   $sharePage.addEventListener('click', (e) => {
     if (e.target.className === 'userList__thumbnail') {
       const $item = e.target.closest('div');
-      location.href = `https://www.youtube.com/channel/${$item.id}`;
+      window.open(`https://www.youtube.com/channel/${$item.id}`);
     }
   });
 }
